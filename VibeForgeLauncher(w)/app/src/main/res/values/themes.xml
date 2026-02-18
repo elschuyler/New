@@ -1,0 +1,16 @@
+<resources>
+    <style name="Theme.Vibeforge" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">#6200EE</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowShowBlurBehind">true</item>
+    </style>
+
+    <style name="Theme.Vibeforge.NoActionBar" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+
+    <style name="Theme.AppCompat.Translucent" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+    </style>
+</resources>
