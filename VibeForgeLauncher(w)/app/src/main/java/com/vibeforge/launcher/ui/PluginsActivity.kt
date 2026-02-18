@@ -28,8 +28,7 @@ class PluginsActivity : AppCompatActivity() {
 
         recyclerView = findViewById(R.id.pluginsList)
         recyclerView.layoutManager = LinearLayoutManager(this)
-        
-        // In a real app, we'd wait for services to bind. Here we reload after a delay.
+
         recyclerView.postDelayed({
             recyclerView.adapter = PluginAdapter(pluginManager.getActivePlugins())
         }, 1000)
@@ -40,28 +39,29 @@ class PluginsActivity : AppCompatActivity() {
         actManager.getMemoryInfo(memInfo)
         memText.text = "Available System RAM: ${memInfo.availMem / (1024 * 1024)} MB"
     }
+}
 
-    inner class PluginAdapter(private val plugins: List<IVibeforgePlugin>) : RecyclerView.Adapter<PluginAdapter.ViewHolder>() {
-        class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val name: TextView = view.findViewById(R.id.pluginName)
-            val stats: TextView = view.findViewById(R.id.pluginStats)
-        }
+class PluginViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+    val name: TextView = view.findViewById(R.id.pluginName)
+    val stats: TextView = view.findViewById(R.id.pluginStats)
+}
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_plugin, parent, false)
-            return ViewHolder(view)
-        }
+class PluginAdapter(private val plugins: List<IVibeforgePlugin>) : RecyclerView.Adapter<PluginViewHolder>() {
 
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val plugin = plugins[position]
-            try {
-                holder.name.text = plugin.pluginName
-                holder.stats.text = "Version: ${plugin.pluginVersion} | RAM: ${plugin.memoryUsage / 1024} KB"
-            } catch (e: Exception) {
-                holder.name.text = "Link Broken"
-            }
-        }
-
-        override fun getItemCount() = plugins.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PluginViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_plugin, parent, false)
+        return PluginViewHolder(view)
     }
+
+    override fun onBindViewHolder(holder: PluginViewHolder, position: Int) {
+        val plugin = plugins[position]
+        try {
+            holder.name.text = plugin.pluginName
+            holder.stats.text = "Version: ${plugin.pluginVersion} | RAM: ${plugin.memoryUsage / 1024} KB"
+        } catch (e: Exception) {
+            holder.name.text = "Link Broken"
+        }
+    }
+
+    override fun getItemCount() = plugins.size
 }
