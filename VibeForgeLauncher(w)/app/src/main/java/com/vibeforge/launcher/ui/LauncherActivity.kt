@@ -39,24 +39,38 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun loadApps() {
         lifecycleScope.launch(Dispatchers.IO) {
-            val pm = packageManager
-            val mainIntent = Intent(Intent.ACTION_MAIN, null)
-            mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
+            try {
+                val pm = packageManager
+                val mainIntent = Intent(Intent.ACTION_MAIN, null)
+                mainIntent.addCategory(Intent.CATEGORY_LAUNCHER)
 
-            val resolvedApps = pm.queryIntentActivities(mainIntent, 0)
-            val apps = resolvedApps.map { resolveInfo ->
-                AppModel(
-                    label = resolveInfo.loadLabel(pm).toString(),
-                    packageName = resolveInfo.activityInfo.packageName,
-                    icon = runCatching { resolveInfo.loadIcon(pm) }.getOrElse { pm.defaultActivityIcon },
-                    isLocked = appLockManager.isLocked(resolveInfo.activityInfo.packageName)
-                )
-            }.sortedBy { it.label.lowercase() }
+                val resolvedApps = try {
+                    pm.queryIntentActivities(mainIntent, 0)
+                } catch (e: Exception) {
+                    emptyList()
+                }
 
-            withContext(Dispatchers.Main) {
-                appsList.clear()
-                appsList.addAll(apps)
-                recyclerView.adapter = AppAdapter(appsList, this@LauncherActivity)
+                val apps = resolvedApps.mapNotNull { resolveInfo ->
+                    try {
+                        AppModel(
+                            label = resolveInfo.loadLabel(pm).toString(),
+                            packageName = resolveInfo.activityInfo.packageName,
+                            icon = runCatching { resolveInfo.loadIcon(pm) }
+                                .getOrElse { pm.defaultActivityIcon },
+                            isLocked = try {
+                                appLockManager.isLocked(resolveInfo.activityInfo.packageName)
+                            } catch (e: Exception) { false }
+                        )
+                    } catch (e: Exception) { null }
+                }.sortedBy { it.label.lowercase() }
+
+                withContext(Dispatchers.Main) {
+                    appsList.clear()
+                    appsList.addAll(apps)
+                    recyclerView.adapter = AppAdapter(appsList, this@LauncherActivity)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
@@ -90,7 +104,9 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun openAppInfo(app: AppModel) {
-        val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+        val intent = Intent(
+            android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        ).apply {
             data = android.net.Uri.parse("package:${app.packageName}")
         }
         startActivity(intent)
